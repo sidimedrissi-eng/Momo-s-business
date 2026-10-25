@@ -486,18 +486,17 @@ function dashboardPage() {
   var candleSvg = '';
   // Les bougies montrent les mouvements du jour autour d'une base commune :
   // vert = ventes vers le haut, rouge = sorties vers le bas, légèrement décalées.
-  // La ligne turquoise montre le cumul net de la période : ventes - sorties.
+  // La ligne turquoise montre la trésorerie réelle à la clôture de chaque jour.
+  // Elle utilise la même échelle que les valeurs affichées sur l'axe de droite.
   var pointSpacing = 530 / Math.max(1, chartDays.length - 1);
   var candleWidth = Math.max(1, Math.min(10, pointSpacing * 0.30));
   var maxMovement = 1;
   var cumulativeNetValues = [];
   var runningNetForScale = 0;
-  var maxAbsCumulativeNet = 1;
   chartDays.forEach(function(day) {
     maxMovement = Math.max(maxMovement, day.sale, day.exp);
     runningNetForScale += day.net;
     cumulativeNetValues.push(runningNetForScale);
-    maxAbsCumulativeNet = Math.max(maxAbsCumulativeNet, Math.abs(runningNetForScale));
   });
   var zeroY = 165;
   // Échelle plus douce pour la ligne de trésorerie : évite qu’elle monte trop haut.
@@ -506,8 +505,8 @@ function dashboardPage() {
   for (var i = 0; i < chartDays.length; i++) {
     var x = 35 + i * pointSpacing;
     var day = chartDays[i];
-    // Positif = au-dessus du zéro, négatif = en dessous.
-    var closeY = zeroY - (cumulativeNetValues[i] / maxAbsCumulativeNet) * movementHeight;
+    // Position de la ligne selon la trésorerie réelle de clôture, alignée sur l'axe droit.
+    var closeY = yForCash(day.close);
     // Ventes : la bougie verte part de zéro et monte.
     if (day.sale > 0) {
       var greenHeight = Math.max(2, (day.sale / maxMovement) * 125);
@@ -546,9 +545,9 @@ function dashboardPage() {
     '<span>' + yMinVal.toFixed(0) + '</span>' +
     '</div>';
 
-  // Ligne d'attente : cumul net à la clôture de la veille, sur la même échelle que la ligne turquoise.
-  var attenteValue = chartDays.length > 1 ? cumulativeNetValues[chartDays.length - 2] : 0;
-  var attenteY = 165 - (attenteValue / maxAbsCumulativeNet) * movementHeight;
+  // Ligne d'attente : trésorerie réelle à la clôture de la veille, même échelle que la ligne turquoise.
+  var attenteValue = chartDays.length > 1 ? chartDays[chartDays.length - 2].close : chartDays[0].open;
+  var attenteY = yForCash(attenteValue);
 
   chart += '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin:0 0 8px 2px;">' +
     '<span><span style="display:inline-block;width:18px;border-top:2px solid var(--accent-green);vertical-align:middle;margin-right:5px;"></span>Trésorerie nette (clôture)</span>' +
