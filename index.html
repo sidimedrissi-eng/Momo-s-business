@@ -471,9 +471,14 @@ function dashboardPage() {
     minCash -= paddingCash;
     maxCash += paddingCash;
   } else {
-    var rangePadding = (maxCash - minCash) * 0.08;
-    minCash -= rangePadding;
-    maxCash += rangePadding;
+    var originalCashRange = maxCash - minCash;
+    // Marges asymétriques calculées sur les données : davantage d'espace sous la trésorerie
+    // pour que la clôture et la ligne Attente ne soient pas collées au bas du graphique.
+    var topPadding = originalCashRange * 0.08;
+    // Augmente la plage sous les valeurs pour remonter les lignes via la vraie échelle.
+    var bottomPadding = originalCashRange * 1.10;
+    minCash -= bottomPadding;
+    maxCash += topPadding;
   }
   var cashSpread = maxCash - minCash;
   var chartTop = 22;
